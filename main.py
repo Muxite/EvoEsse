@@ -4,6 +4,24 @@ import pprint
 pp = pprint.PrettyPrinter(indent=3)
 
 
+def update_carat(string):
+    initialized = False   # has a carat been added already?
+    new_string = ''
+    index = string.find('|')  # return the location of the carat, -1 if none
+    if index == -1:
+        new_string = '|' + string  # add acarat at the front
+        return new_string
+    else:
+        if index+2 < len(string):  # if have not reached the end of the string
+            string = string.replace('|', '')
+            new_string = string[:index+1] + '|' + string[index+1:]
+            return new_string
+        else:
+            string = string.replace('|', '')  # remove the carat
+            new_string = '|' + string  # loop the carat back to the start
+            return new_string
+
+
 class Simulation:  # this class is the conversation itself
     def __init__(self):
         self.name = str(input("NAME OF THE SIMULATION: "))

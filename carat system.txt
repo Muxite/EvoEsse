@@ -1,0 +1,38 @@
+def update_carat(string):
+    initialized = False
+    new_string = ''
+    index = string.find('|')
+    if index == -1:
+        new_string = '|' + string
+        return new_string
+    else:
+        if index+2 < len(string):  # if we have not reached the end of the string
+            string = string.replace('|', '')
+            new_string = string[:index+1] + '|' + string[index+1:]
+            return new_string
+        else:
+            string = string.replace('|', '')  # remove the carat
+            new_string = '|' + string  # loop the carat back to the start
+            return new_string
+
+
+# menu()
+sample_text = "abcdefg"
+for i in range(0, 10):
+    sample_text = update_carat(sample_text)
+    print(sample_text)
+
+
+
+|abcdefg
+a|bcdefg
+ab|cdefg
+abc|defg
+abcd|efg
+abcde|fg
+abcdef|g
+|abcdefg
+a|bcdefg
+ab|cdefg
+
+Process finished with exit code 0
