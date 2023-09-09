@@ -22,6 +22,22 @@ def update_caret(string):
             return new_string
 
 
+def select_random_section(string):
+    # the string is treated as a circle
+    start = random.randint(-len(string), len(string))
+    end = random.randint(start, start+len(string))
+
+    def wrap(location, length):  # wrap the string into a loop
+        return location % length
+
+    # create the section
+    new_string = ''
+    for i in range(start, end):
+        new_string += string[wrap(i, len(string))]
+
+    return new_string  # return the section
+
+
 def mutate(organism):
     # do stuff to the organism code
     return organism
@@ -49,36 +65,43 @@ class Simulation:  # this class is the conversation itself
 
     def update(self):
         old = self.organisms.copy()  # read from old, write to self.organism
-        for organism in old:  # organism is a string
-            update_caret(organism)  # if theres no caret, then there should be one now
-            index = organism.find('|')+1  # the character after the caret
+        for o in range(old):  # organism is a string
+            update_caret(old[o])  # if there is no caret, then there should be one now
+            index = old[o].find('|')+1  # the character after the caret
 
             # clone 'c'
-            if organism[index] == 'c':
+            if old[o][index] == 'c':
                 # clone is viable early, but loses viability long term as the cost increases
                 if self.difficulty > 1:  # will require more than 1 c to clone
                     for i in range(index-int(self.difficulty)+1, index):  # check backwards
-                        if organism[i] != 'c':
+                        if old[o][i] != 'c':
                             break  # failed cloning
                     # if that all worked, then clone one
-                    self.organisms.append(mutate(organism))
+                    self.organisms.append(mutate(old[o]))
                 else:
-                    self.organisms.append(mutate(organism))
+                    self.organisms.append(mutate(old[o]))
 
             # kill 'k'
-            if organism[index] == 'k':
+            if old[o][index] == 'k':
                 # select a random to kill
                 target = random.randint(0, len(old))
                 self.organisms.remove(target)  # kills one, possibly itself
 
             # inject 'i'
-            if organism[index] == 'k':
-                # select a random to kill
+            if old[o][index] == 'i':
+                # select a random to inject to
                 target = random.randint(0, len(old))
-
-
+                # select a portion to inject
+                to_inject = select_random_section(old[o])
+                self.organisms[target] += mutate(to_inject)  # add the injection to end
 
             # steal 's'
+            if old[o][index] == 's':
+                # select a random to steal from
+                target = random.randint(0, len(old))
+                # select a portion to inject
+                to_steal = select_random_section(old[target])
+                self.organisms[o] += mutate(to_steal)  # add the injection to end of future self
 
             # reinforce 'r'
 
