@@ -1,4 +1,4 @@
-def update_carat(string):
+def update_caret(string):
     initialized = False
     new_string = ''
     index = string.find('|')
@@ -11,15 +11,15 @@ def update_carat(string):
             new_string = string[:index+1] + '|' + string[index+1:]
             return new_string
         else:
-            string = string.replace('|', '')  # remove the carat
-            new_string = '|' + string  # loop the carat back to the start
+            string = string.replace('|', '')  # remove the caret
+            new_string = '|' + string  # loop the caret back to the start
             return new_string
 
 
 # menu()
 sample_text = "abcdefg"
 for i in range(0, 10):
-    sample_text = update_carat(sample_text)
+    sample_text = update_caret(sample_text)
     print(sample_text)
 
 
