@@ -52,11 +52,10 @@ class Simulation:  # this class is the conversation itself
         #self.name = str(input("NAME OF THE SIMULATION: "))
         #self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
         #self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
-        self.seed_location = 'F:\in'
-        self.results_location = 'F:\out'
+        self.seed_location = 'C:\in'
+        self.results_location = 'C:\out'
         self.turns = int(input("MAX TURNS IN SIMULATION: "))
         self.organisms = []  # this is the big file where all the organisms are
-        self.difficulty = 1
 
     def load(self):  # loads all the organisms from txt
         try:
@@ -73,7 +72,6 @@ class Simulation:  # this class is the conversation itself
             self.organisms[o] = update_caret(self.organisms[o])
         old = self.organisms.copy()  # read from old, write to self.organism
         for o in range(len(old)):  # organism is a string
-
             index = old[o].find('|')
             old[o] = old[o].replace('|', '')  # remove it to avoid mistakes
             # clone 'c'
@@ -82,51 +80,46 @@ class Simulation:  # this class is the conversation itself
                 # check backwards
                 do_clone = True
                 try:
-                    print(range(index-self.difficulty+1, index))
-                    for i in range(index-self.difficulty+1, index):
-                        if old[o][wrap(i, len(old[o]))] != 'c':
-                            do_clone = False
-                            print("failed to clone")
-                    if do_clone:
-                        # if that all worked, then clone one
-                        print("cloned with " + str(self.difficulty))
-                        self.organisms.append(mutate(old[o]))
+                    print("cloned with " + str(self.difficulty))
+                    self.organisms.append(mutate(old[o]))
                 except IndexError:
-                    print("failed to clone: IndexError")
+                    print("failed to clone")
 
             # kill 'k'
             if old[o][index] == 'k':
-                # select a random to kill
-                target = random.randint(0, len(old)-1)
-                try:
-                    print("killed " + str(target))
-                    self.organisms.remove(self.organisms[target])  # kills one, possibly itself
-                except IndexError:
-                    print("failed kill")
+                # must target first
+                if old[o][wrap(index-1, len(old[o]))] == 't':  # t for target
+                    target = random.randint(0, len(old) - 1)
+                    try:
+                        print("killed " + str(target))
+                        self.organisms.remove(self.organisms[target])  # kills one, possibly itself
+                    except IndexError:
+                        print("failed kill")
 
             # inject 'i'
             if old[o][index] == 'i':
-                # select a random to inject to
-                target = random.randint(0, len(old)-1)
-                # select a portion to inject
-                to_inject = select_random_section(old[o])
-                try:
-                    print("injected " + str(to_inject) + " to " + str(target))
-                    self.organisms[target] += mutate(to_inject)  # add the injection to end
-                except IndexError:
-                    print("failed injection")
+                if old[o][wrap(index - 1, len(old[o]))] == 't':  # t for target
+                    target = random.randint(0, len(old) - 1)
+                    # select a portion to inject
+                    to_inject = select_random_section(old[o])
+                    try:
+                        print("injected " + str(to_inject) + " to " + str(target))
+                        self.organisms[target] += mutate(to_inject)  # add the injection to end
+                    except IndexError:
+                        print("failed injection")
+
 
             # steal 's'
             if old[o][index] == 's':
-                # select a random to steal from
-                target = random.randint(0, len(old)-1)
-                # select a portion to inject
-                to_steal = select_random_section(old[target])
-                try:
-                    print("stolen " + str(to_steal) + " from " + str(target))
-                    self.organisms[o] += mutate(to_steal)  # add the injection to end of future self
-                except IndexError:
-                    print("failed steal")
+                if old[o][wrap(index - 1, len(old[o]))] == 't':  # t for target
+                    target = random.randint(0, len(old) - 1)
+                    # select a portion to inject
+                    to_steal = select_random_section(old[target])
+                    try:
+                        print("stolen " + str(to_steal) + " from " + str(target))
+                        self.organisms[o] += mutate(to_steal)  # add the injection to end of future self
+                    except IndexError:
+                        print("failed steal")
 
             # reinforce 'r'
             if old[o][index] == 'r':
@@ -137,14 +130,6 @@ class Simulation:  # this class is the conversation itself
                     self.organisms[o] += mutate(to_reinforce)  # add to future self
                 except IndexError:
                     print("failed reinforce")
-
-    def update_difficulty(self):
-        if len(self.organisms) < 100:
-            self.difficulty = 1
-            print("difficulty =" + str(1 + 0.001 * pow(len(self.organisms), 1.1)))
-        else:
-            self.difficulty = math.floor(1 + 0.001*pow(len(self.organisms), 1.1))
-            print("difficulty =" + str(1 + 0.001*pow(len(self.organisms), 1.1)))
 
     def save_txt(self, max_files):
         for i in range(0, len(self.organisms)):
@@ -161,6 +146,7 @@ def menu():
     for i in range(0, s.turns):
         s.update()
         s.update_difficulty()
+
     s.save_txt(2000)
 
 
