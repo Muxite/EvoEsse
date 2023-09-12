@@ -26,12 +26,25 @@ def update_caret(string):
             return new_string
 
 
-def check_behind(string, char, start, count):
+def count_behind(string, char, start, count):
     for i in range(0, count):  # checking including start
         position = start-i
         if string[wrap(position, len(string))] != char:
             return i
     return count
+
+
+def find_behind(string, a, b, start):
+    for i in range(0, len(string)):  # checking including start
+        position = start-i
+        if string[wrap(position, len(string))] == a:
+            pass
+            # whatever
+        elif string[wrap(position, len(string))] == b:
+            return i
+        else:
+            return -1
+    return -1
 
 
 def check_front(string, char, start):  # check one ahead
@@ -97,7 +110,7 @@ class Simulation:  # this class is the conversation itself
 
             # clone 'c' if it is the last 'c' in the chain
             if old[o][index] == 'c' and check_front(old[o], 'c', index) is False:
-                char_count = check_behind(old[o], 'c', 99, index)
+                char_count = count_behind(old[o], 'c', 99, index)
                 # if there is enough, then copy all
                 if char_count*self.c > len(old[o]):
                     print("cloned")
@@ -120,26 +133,40 @@ class Simulation:  # this class is the conversation itself
                         print("failed kill")
 
             # inject 'i'
-            if old[o][index] == 'i':
-                if old[o][wrap(index - 1, len(old[o]))] == 't':  # t for target
+            if old[o][index] == 'i' and check_front(old[o], 'i', index) is False:
+                if find_behind(old[o], 'i', 't', index) != -1:  # immediately before i(s) was a t?
                     target = random.randint(0, len(old) - 1)
                     # select a portion to inject
-                    to_inject = select_random_section(old[o])
+                    char_count = count_behind(old[o], 'i', 99, index)
+                    # if there is enough, then inject all
                     try:
-                        print("injected " + str(to_inject) + " to " + str(target))
-                        self.organisms[target] += mutate(to_inject)  # add the injection to end
+                        if char_count * self.c > len(old[o]):
+                            print("injected")
+                            self.organisms.append(mutate(old[o]))
+                        # otherwise inject as much as possible
+                        else:
+                            to_add = copy_behind(old[o], index, char_count * self.c)
+                            print("injected")
+                            self.organisms.append(mutate(to_add))
                     except IndexError:
-                        print("failed injection")
+                        print("failed inject")
 
             # steal 's'
-            if old[o][index] == 's':
-                if old[o][wrap(index - 1, len(old[o]))] == 't':  # t for target
+            if old[o][index] == 's' and check_front(old[o], 's', index) is False:
+                if find_behind(old[o], 's', 't', index) != -1:  # immediately before s(s) was a t?
                     target = random.randint(0, len(old) - 1)
                     # select a portion to inject
-                    to_steal = select_random_section(old[target])
+                    char_count = count_behind(old[o], 's', 99, index)
+                    # if there is enough, then inject all
                     try:
-                        print("stolen " + str(to_steal) + " from " + str(target))
-                        self.organisms[o] += mutate(to_steal)  # add the injection to end of future self
+                        if char_count * self.c > len(old[o]):
+                            print("stolen")
+                            self.organisms[target] += mutate(old[o])
+                        # otherwise inject as much as possible
+                        else:
+                            to_add = copy_behind(old[o], index, char_count * self.c)
+                            print("stolen")
+                            self.organisms[target] += mutate(to_add)
                     except IndexError:
                         print("failed steal")
 
