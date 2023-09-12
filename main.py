@@ -26,6 +26,25 @@ def update_caret(string):
             return new_string
 
 
+def check_behind(string, char, start, count):
+    for i in range(0, count):  # checking including start
+        position = start-i
+        if string[wrap(position, len(string))] != char:
+            return i
+    return count
+
+
+def check_front(string, char, start):  # check one ahead
+    return string[wrap(start+1, len(string))] == char
+
+
+def copy_behind(string, start, count):
+    new_string = ''
+    for i in range(count):
+        new_string = string[wrap(i, len(string))]
+    return new_string
+
+
 def wrap(location, length):  # wrap the string into a loop
     return location % length
 
@@ -52,8 +71,9 @@ class Simulation:  # this class is the conversation itself
         #self.name = str(input("NAME OF THE SIMULATION: "))
         #self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
         #self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
-        self.seed_location = 'C:\in'
-        self.results_location = 'C:\out'
+        self.seed_location = 'F:\in'
+        self.results_location = 'F:\out'
+        self.c = int(input("COEFFICIENT: "))
         self.turns = int(input("MAX TURNS IN SIMULATION: "))
         self.organisms = []  # this is the big file where all the organisms are
 
@@ -74,16 +94,19 @@ class Simulation:  # this class is the conversation itself
         for o in range(len(old)):  # organism is a string
             index = old[o].find('|')
             old[o] = old[o].replace('|', '')  # remove it to avoid mistakes
-            # clone 'c'
-            if old[o][index] == 'c':
-                # clone is viable early, but loses viability long term as the cost increases
-                # check backwards
-                do_clone = True
-                try:
-                    print("cloned with " + str(self.difficulty))
+
+            # clone 'c' if it is the last 'c' in the chain
+            if old[o][index] == 'c' and check_front(old[o], 'c', index) is False:
+                char_count = check_behind(old[o], 'c', 99, index)
+                # if there is enough, then copy all
+                if char_count*self.c > len(old[o]):
+                    print("cloned")
                     self.organisms.append(mutate(old[o]))
-                except IndexError:
-                    print("failed to clone")
+                # otherwise copy as much as possible
+                else:
+                    to_add = copy_behind(old[o], index, char_count*self.c)
+                    print("cloned")
+                    self.organisms.append(mutate(to_add))
 
             # kill 'k'
             if old[o][index] == 'k':
@@ -107,7 +130,6 @@ class Simulation:  # this class is the conversation itself
                         self.organisms[target] += mutate(to_inject)  # add the injection to end
                     except IndexError:
                         print("failed injection")
-
 
             # steal 's'
             if old[o][index] == 's':
@@ -145,7 +167,6 @@ def menu():
     s.load()
     for i in range(0, s.turns):
         s.update()
-        s.update_difficulty()
 
     s.save_txt(2000)
 
