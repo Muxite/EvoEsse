@@ -2,7 +2,6 @@
 import os
 import pprint
 import random
-import math
 
 pp = pprint.PrettyPrinter(indent=3)
 
@@ -14,7 +13,7 @@ def update_caret(string):
         print(new_string)
         return new_string
     else:
-        if index+2 < len(string):  # if have not reached the end of the string
+        if index+2 < len(string):  # if it has not reached the end of the string
             string = string.replace('|', '')
             new_string = string[:index+1] + '|' + string[index+1:]
             print(new_string)
@@ -81,11 +80,11 @@ def mutate(organism):
 
 class Simulation:  # this class is the conversation itself
     def __init__(self):
-        #self.name = str(input("NAME OF THE SIMULATION: "))
-        #self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
-        #self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
-        self.seed_location = 'F:\in'
-        self.results_location = 'F:\out'
+        # self.name = str(input("NAME OF THE SIMULATION: "))
+        # self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
+        # self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
+        self.seed_location = 'C:\in'
+        self.results_location = 'C:\out'
         self.c = int(input("COEFFICIENT: "))
         self.turns = int(input("MAX TURNS IN SIMULATION: "))
         self.organisms = []  # this is the big file where all the organisms are
@@ -101,11 +100,13 @@ class Simulation:  # this class is the conversation itself
             input("ERROR: FOLDER NOT FOUND, CREATE AND POPULATE THE FOLDER, THEN RESTART SIMULATION")
 
     def update(self):
-        for o in range(len(self.organisms)):
+        old = []
+        for o in range(0, len(self.organisms)):
             self.organisms[o] = update_caret(self.organisms[o])
-        old = self.organisms.copy()  # read from old, write to self.organism
+            old.append(self.organisms[o])
+
         for o in range(len(old)):  # organism is a string
-            index = old[o].find('|')
+            index = int(old[o].find('|'))
             old[o] = old[o].replace('|', '')  # remove it to avoid mistakes
 
             # clone 'c' if it is the last 'c' in the chain
@@ -118,7 +119,7 @@ class Simulation:  # this class is the conversation itself
                 # otherwise copy as much as possible
                 else:
                     to_add = copy_behind(old[o], index, char_count*self.c)
-                    print("cloned")
+                    print("cloned partially")
                     self.organisms.append(mutate(to_add))
 
             # kill 'k'
@@ -146,7 +147,7 @@ class Simulation:  # this class is the conversation itself
                         # otherwise inject as much as possible
                         else:
                             to_add = copy_behind(old[o], index, char_count * self.c)
-                            print("injected")
+                            print("injected partially")
                             self.organisms.append(mutate(to_add))
                     except IndexError:
                         print("failed inject")
@@ -160,25 +161,31 @@ class Simulation:  # this class is the conversation itself
                     # if there is enough, then inject all
                     try:
                         if char_count * self.c > len(old[o]):
-                            print("stolen")
+                            print("stole")
                             self.organisms[target] += mutate(old[o])
                         # otherwise inject as much as possible
                         else:
                             to_add = copy_behind(old[o], index, char_count * self.c)
-                            print("stolen")
+                            print("stole partially")
                             self.organisms[target] += mutate(to_add)
                     except IndexError:
                         print("failed steal")
 
             # reinforce 'r'
-            if old[o][index] == 'r':
-                # take from self
-                to_reinforce = select_random_section(old[o])
+            if old[o][index] == 'r' and check_front(old[o], 'r', index) is False:
+                char_count = count_behind(old[o], 'r', 99, index)
+                # if there is enough, then inject all
                 try:
-                    print("reinforced " + str(to_reinforce))
-                    self.organisms[o] += mutate(to_reinforce)  # add to future self
+                    if char_count * self.c > len(old[o]):
+                        print("reinforced")
+                        self.organisms[o] += mutate(old[o])
+                    # otherwise inject as much as possible
+                    else:
+                        to_add = copy_behind(old[o], index, char_count * self.c)
+                        print("reinforced partially")
+                        self.organisms[o] += mutate(to_add)
                 except IndexError:
-                    print("failed reinforce")
+                    print("failed reinforced")
 
     def save_txt(self, max_files):
         for i in range(0, len(self.organisms)):
