@@ -10,18 +10,15 @@ def update_caret(string):
     index = string.find('|')  # return the location of the caret, -1 if none
     if index == -1:
         new_string = '|' + string  # add a caret at the front
-        print(new_string)
         return new_string
     else:
         if index+2 < len(string):  # if it has not reached the end of the string
             string = string.replace('|', '')
             new_string = string[:index+1] + '|' + string[index+1:]
-            print(new_string)
             return new_string
         else:
             string = string.replace('|', '')  # remove the carat
             new_string = '|' + string  # loop the caret back to the start
-            print(new_string)
             return new_string
 
 
@@ -30,7 +27,7 @@ def count_behind(string, char, start, count):
         position = start-i
         if string[wrap(position, len(string))] != char:
             return i
-    return count
+    return count-1
 
 
 def find_behind(string, a, b, start):
@@ -47,13 +44,16 @@ def find_behind(string, a, b, start):
 
 
 def check_front(string, char, start):  # check one ahead
-    return string[wrap(start+1, len(string))] == char
+    if string[wrap(start+1, len(string))] == char:
+        return True
+    else:
+        return False
 
 
 def copy_behind(string, start, count):
     new_string = ''
     for i in range(count):
-        new_string = string[wrap(i, len(string))]
+        new_string += string[wrap(start-(count-i)+1, len(string))]
     return new_string
 
 
@@ -83,8 +83,8 @@ class Simulation:  # this class is the conversation itself
         # self.name = str(input("NAME OF THE SIMULATION: "))
         # self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
         # self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
-        self.seed_location = 'C:\in'
-        self.results_location = 'C:\out'
+        self.seed_location = 'F:\in'
+        self.results_location = 'F:\out'
         self.c = int(input("COEFFICIENT: "))
         self.turns = int(input("MAX TURNS IN SIMULATION: "))
         self.organisms = []  # this is the big file where all the organisms are
@@ -103,23 +103,25 @@ class Simulation:  # this class is the conversation itself
         old = []
         for o in range(0, len(self.organisms)):
             self.organisms[o] = update_caret(self.organisms[o])
+            print(self.organisms[o])
             old.append(self.organisms[o])
 
         for o in range(len(old)):  # organism is a string
-            index = int(old[o].find('|'))
+            index = old[o].index('|')
             old[o] = old[o].replace('|', '')  # remove it to avoid mistakes
 
             # clone 'c' if it is the last 'c' in the chain
             if old[o][index] == 'c' and check_front(old[o], 'c', index) is False:
-                char_count = count_behind(old[o], 'c', 99, index)
+                char_count = count_behind(old[o], 'c', index, len(old[o]))
+                print(char_count)
                 # if there is enough, then copy all
                 if char_count*self.c > len(old[o]):
                     print("cloned")
                     self.organisms.append(mutate(old[o]))
                 # otherwise copy as much as possible
                 else:
-                    to_add = copy_behind(old[o], index, char_count*self.c)
-                    print("cloned partially")
+                    to_add = copy_behind(old[o], index, char_count*int(self.c))
+                    print("cloned partially " + to_add)
                     self.organisms.append(mutate(to_add))
 
             # kill 'k'
@@ -138,17 +140,17 @@ class Simulation:  # this class is the conversation itself
                 if find_behind(old[o], 'i', 't', index) != -1:  # immediately before i(s) was a t?
                     target = random.randint(0, len(old) - 1)
                     # select a portion to inject
-                    char_count = count_behind(old[o], 'i', 99, index)
+                    char_count = count_behind(old[o], 'i', index, len(old[o]))
                     # if there is enough, then inject all
                     try:
                         if char_count * self.c > len(old[o]):
                             print("injected")
-                            self.organisms.append(mutate(old[o]))
+                            self.organisms[target] += mutate(old[o])
                         # otherwise inject as much as possible
                         else:
                             to_add = copy_behind(old[o], index, char_count * self.c)
                             print("injected partially")
-                            self.organisms.append(mutate(to_add))
+                            self.organisms[target] += mutate(to_add)
                     except IndexError:
                         print("failed inject")
 
@@ -157,7 +159,7 @@ class Simulation:  # this class is the conversation itself
                 if find_behind(old[o], 's', 't', index) != -1:  # immediately before s(s) was a t?
                     target = random.randint(0, len(old) - 1)
                     # select a portion to inject
-                    char_count = count_behind(old[o], 's', 99, index)
+                    char_count = count_behind(old[o], 's', index, len(old[o]))
                     # if there is enough, then inject all
                     try:
                         if char_count * self.c > len(old[o]):
@@ -173,7 +175,7 @@ class Simulation:  # this class is the conversation itself
 
             # reinforce 'r'
             if old[o][index] == 'r' and check_front(old[o], 'r', index) is False:
-                char_count = count_behind(old[o], 'r', 99, index)
+                char_count = count_behind(old[o], 'r', index, len(old[o]))
                 # if there is enough, then inject all
                 try:
                     if char_count * self.c > len(old[o]):
