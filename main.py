@@ -75,7 +75,15 @@ def select_random_section(string):
 
 def mutate(organism):
     # do stuff to the organism code
-    return organism
+    new_organism = ''
+    t = ['c', 'k', 't', 'i', 's', 'r']
+    for i in range(len(organism)):
+        if random.randint(0, 100) < 10:
+            new_organism += t[random.randint(0, 5)]
+        else:
+            new_organism += organism[i]
+
+    return new_organism
 
 
 class Simulation:  # this class is the conversation itself
@@ -95,7 +103,6 @@ class Simulation:  # this class is the conversation itself
             for i in range(len(txt_files)):
                 with open(os.path.join(self.seed_location, txt_files[i]), 'r') as f:
                     self.organisms.append(f.read())  # read the contents of the file and append it to the list
-            pp.pprint(self.organisms)
         except FileNotFoundError:
             input("ERROR: FOLDER NOT FOUND, CREATE AND POPULATE THE FOLDER, THEN RESTART SIMULATION")
 
@@ -103,7 +110,6 @@ class Simulation:  # this class is the conversation itself
         old = []
         for o in range(0, len(self.organisms)):
             self.organisms[o] = update_caret(self.organisms[o])
-            print(self.organisms[o])
             old.append(self.organisms[o])
 
         for o in range(len(old)):  # organism is a string
@@ -113,15 +119,12 @@ class Simulation:  # this class is the conversation itself
             # clone 'c' if it is the last 'c' in the chain
             if old[o][index] == 'c' and check_front(old[o], 'c', index) is False:
                 char_count = count_behind(old[o], 'c', index, len(old[o]))
-                print(char_count)
                 # if there is enough, then copy all
                 if char_count*self.c > len(old[o]):
-                    print("cloned")
                     self.organisms.append(mutate(old[o]))
                 # otherwise copy as much as possible
                 else:
                     to_add = copy_behind(old[o], index, char_count*int(self.c))
-                    print("cloned partially " + to_add)
                     self.organisms.append(mutate(to_add))
 
             # kill 'k'
@@ -130,10 +133,9 @@ class Simulation:  # this class is the conversation itself
                 if old[o][wrap(index-1, len(old[o]))] == 't':  # t for target
                     target = random.randint(0, len(old) - 1)
                     try:
-                        print("killed " + str(target))
                         self.organisms.remove(self.organisms[target])  # kills one, possibly itself
                     except IndexError:
-                        print("failed kill")
+                        pass
 
             # inject 'i'
             if old[o][index] == 'i' and check_front(old[o], 'i', index) is False:
@@ -144,15 +146,13 @@ class Simulation:  # this class is the conversation itself
                     # if there is enough, then inject all
                     try:
                         if char_count * self.c > len(old[o]):
-                            print("injected")
                             self.organisms[target] += mutate(old[o])
                         # otherwise inject as much as possible
                         else:
                             to_add = copy_behind(old[o], index, char_count * self.c)
-                            print("injected partially")
                             self.organisms[target] += mutate(to_add)
                     except IndexError:
-                        print("failed inject")
+                        pass
 
             # steal 's'
             if old[o][index] == 's' and check_front(old[o], 's', index) is False:
@@ -163,15 +163,13 @@ class Simulation:  # this class is the conversation itself
                     # if there is enough, then inject all
                     try:
                         if char_count * self.c > len(old[o]):
-                            print("stole")
                             self.organisms[target] += mutate(old[o])
                         # otherwise inject as much as possible
                         else:
                             to_add = copy_behind(old[o], index, char_count * self.c)
-                            print("stole partially")
                             self.organisms[target] += mutate(to_add)
                     except IndexError:
-                        print("failed steal")
+                        pass
 
             # reinforce 'r'
             if old[o][index] == 'r' and check_front(old[o], 'r', index) is False:
@@ -179,15 +177,13 @@ class Simulation:  # this class is the conversation itself
                 # if there is enough, then inject all
                 try:
                     if char_count * self.c > len(old[o]):
-                        print("reinforced")
                         self.organisms[o] += mutate(old[o])
                     # otherwise inject as much as possible
                     else:
                         to_add = copy_behind(old[o], index, char_count * self.c)
-                        print("reinforced partially")
                         self.organisms[o] += mutate(to_add)
                 except IndexError:
-                    print("failed reinforced")
+                    pass
 
     def save_txt(self, max_files):
         for i in range(0, len(self.organisms)):
@@ -202,9 +198,10 @@ def menu():
     s = Simulation()
     s.load()
     for i in range(0, s.turns):
+        print(i)
         s.update()
 
-    s.save_txt(2000)
+    s.save_txt(100000)
 
 
 menu()
