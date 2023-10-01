@@ -1,5 +1,4 @@
 # this operates the simulation
-import os
 import pprint
 import random
 
@@ -76,14 +75,25 @@ def select_random_section(string):
 def mutate(organism):
     # do stuff to the organism code
     new_organism = ''
-    t = ['c', 'k', 't', 'i', 's', 'r']
+    t = ['c', 'k', 'i', 's', 'r']
     for i in range(len(organism)):
-        if random.randint(0, 100) < 10:
-            new_organism += t[random.randint(0, 5)]
+        if random.randint(0, 100) < 4:
+            new_organism += t[random.randint(0, 4)]
         else:
             new_organism += organism[i]
 
     return new_organism
+
+
+def insert(part, into):
+    cut = random.randint(0, len(into))
+    result = ''
+    for i in range(0, cut):
+        result += into[i]
+    result += part
+    for i in range(cut, len(into)):
+        result += into[i]
+    return result
 
 
 class Simulation:  # this class is the conversation itself
@@ -91,24 +101,34 @@ class Simulation:  # this class is the conversation itself
         # self.name = str(input("NAME OF THE SIMULATION: "))
         # self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
         # self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
-        self.seed_location = 'F:\in'
-        self.results_location = 'F:\out'
+        self.seed_location = 'Experiments/in.txt'
+        self.results_location = 'Experiments/'
         self.c = int(input("COEFFICIENT: "))
         self.turns = int(input("MAX TURNS IN SIMULATION: "))
+        self.max_organisms = int(input("MAX ORGANISMS: "))
         self.organisms = []  # this is the big file where all the organisms are
 
     def load(self):  # loads all the organisms from txt
         try:
-            txt_files = [f for f in os.listdir(self.seed_location) if f.endswith('.txt')]
-            for i in range(len(txt_files)):
-                with open(os.path.join(self.seed_location, txt_files[i]), 'r') as f:
-                    self.organisms.append(f.read())  # read the contents of the file and append it to the list
+            txt_file = open(self.seed_location, 'r')
+            temp = txt_file.readlines()
+            txt_file.close()
+            try:
+                self.organisms.remove(" ")
+                print("empty removed")
+            except ValueError:
+                pass
+            for i in range(len(temp)):
+                temp[i] = temp[i].strip('\n')
+            self.organisms = temp
         except FileNotFoundError:
             input("ERROR: FOLDER NOT FOUND, CREATE AND POPULATE THE FOLDER, THEN RESTART SIMULATION")
 
     def update(self):
         old = []
+
         for o in range(0, len(self.organisms)):
+
             self.organisms[o] = update_caret(self.organisms[o])
             old.append(self.organisms[o])
 
@@ -130,78 +150,78 @@ class Simulation:  # this class is the conversation itself
             # kill 'k'
             if old[o][index] == 'k':
                 # must target first
-                if old[o][wrap(index-1, len(old[o]))] == 't':  # t for target
-                    target = random.randint(0, len(old) - 1)
-                    try:
-                        self.organisms.remove(self.organisms[target])  # kills one, possibly itself
-                    except IndexError:
-                        pass
+                target = random.randint(0, len(old) - 1)
+                try:
+                    self.organisms.remove(self.organisms[target])  # kills one, possibly itself
+                except IndexError:
+                    pass
 
             # inject 'i'
             if old[o][index] == 'i' and check_front(old[o], 'i', index) is False:
-                if find_behind(old[o], 'i', 't', index) != -1:  # immediately before i(s) was a t?
-                    target = random.randint(0, len(old) - 1)
-                    # select a portion to inject
-                    char_count = count_behind(old[o], 'i', index, len(old[o]))
-                    # if there is enough, then inject all
-                    try:
-                        if char_count * self.c > len(old[o]):
-                            self.organisms[target] += mutate(old[o])
-                        # otherwise inject as much as possible
-                        else:
-                            to_add = copy_behind(old[o], index, char_count * self.c)
-                            self.organisms[target] += mutate(to_add)
-                    except IndexError:
-                        pass
+                target = random.randint(0, len(old) - 1)
+                # select a portion to inject
+                char_count = count_behind(old[o], 'i', index, len(old[o]))
+                # if there is enough, then inject all
+                try:
+                    if char_count * self.c > len(old[o]):
+                        self.organisms[target] = insert(mutate(old[o]), self.organisms[o])
+                    # otherwise inject as much as possible
+                    else:
+                        to_add = copy_behind(old[o], index, char_count * self.c)
+                        self.organisms[target] = insert(mutate(to_add), self.organisms[o])
+                except IndexError:
+                    pass
 
             # steal 's'
             if old[o][index] == 's' and check_front(old[o], 's', index) is False:
-                if find_behind(old[o], 's', 't', index) != -1:  # immediately before s(s) was a t?
-                    target = random.randint(0, len(old) - 1)
-                    # select a portion to inject
-                    char_count = count_behind(old[o], 's', index, len(old[o]))
-                    # if there is enough, then inject all
-                    try:
-                        if char_count * self.c > len(old[o]):
-                            self.organisms[target] += mutate(old[o])
-                        # otherwise inject as much as possible
-                        else:
-                            to_add = copy_behind(old[o], index, char_count * self.c)
-                            self.organisms[target] += mutate(to_add)
-                    except IndexError:
-                        pass
+                target = random.randint(0, len(old) - 1)
+                # select a portion to inject
+                char_count = count_behind(old[o], 's', index, len(old[o]))
+                # if there is enough, then inject all
+                try:
+                    if char_count * self.c > len(old[o]):
+
+                        self.organisms[target] = insert(mutate(old[o]), self.organisms[o])
+                    # otherwise inject as much as possible
+                    else:
+                        to_add = copy_behind(old[o], index, char_count * self.c)
+                        self.organisms[target] = insert(mutate(to_add), self.organisms[o])
+                except IndexError:
+                    pass
 
             # reinforce 'r'
             if old[o][index] == 'r' and check_front(old[o], 'r', index) is False:
                 char_count = count_behind(old[o], 'r', index, len(old[o]))
-                # if there is enough, then inject all
+                # if there is enough, then reinforce with all
                 try:
                     if char_count * self.c > len(old[o]):
-                        self.organisms[o] += mutate(old[o])
-                    # otherwise inject as much as possible
+                        self.organisms[o] = insert(mutate(old[o]), self.organisms[o])
+                    # otherwise reinforce as much as possible
                     else:
                         to_add = copy_behind(old[o], index, char_count * self.c)
-                        self.organisms[o] += mutate(to_add)
+                        self.organisms[o] = insert(mutate(to_add), self.organisms[o])
                 except IndexError:
                     pass
 
-    def save_txt(self, max_files):
+    def save_txt(self, tag):
+        location = self.results_location + str(self.c) + '-' + tag + '.txt'
+        f = open(location, 'w')
         for i in range(0, len(self.organisms)):
-            if i > max_files:
+            if i > self.max_organisms:
                 break
-            filename = os.path.join(self.results_location, f'file{i}.txt')
-            with open(filename, 'w') as f:
-                f.write(self.organisms[i])
+            f.write(self.organisms[i] + '\n')
+        print("num: " + str(len(self.organisms)))
 
 
 def menu():
     s = Simulation()
     s.load()
     for i in range(0, s.turns):
-        print(i)
+        print("turn = " + str(i))
         s.update()
-
-    s.save_txt(100000)
+        # save every 1
+        if i % 1 == 0:
+            s.save_txt(str(i))
 
 
 menu()
