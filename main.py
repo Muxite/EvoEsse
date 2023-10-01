@@ -1,6 +1,8 @@
 # this operates the simulation
 import pprint
 import random
+import matplotlib.pyplot as plt
+import os
 
 pp = pprint.PrettyPrinter(indent=3)
 
@@ -98,6 +100,7 @@ def insert(part, into):
 
 class Simulation:  # this class is the conversation itself
     def __init__(self):
+        print("*SIMULATOR OPEN*")
         # self.name = str(input("NAME OF THE SIMULATION: "))
         # self.seed_location = str(input("SEED FOLDER LOCATION: ")).replace('"', '')
         # self.results_location = str(input("RESULTS FOLDER LOCATION: ")).replace('"', '')
@@ -108,13 +111,14 @@ class Simulation:  # this class is the conversation itself
         self.max_organisms = int(input("MAX ORGANISMS: "))
         self.organisms = []  # this is the big file where all the organisms are
 
-    def load(self):  # loads all the organisms from txt
+    def load(self, location):  # loads all the organisms from txt
+        print("*SIMULATOR LOADING")
         try:
-            txt_file = open(self.seed_location, 'r')
+            txt_file = open(location, 'r')
             temp = txt_file.readlines()
             txt_file.close()
             try:
-                self.organisms.remove(" ")
+                temp.remove(" ")
                 print("empty removed")
             except ValueError:
                 pass
@@ -128,7 +132,6 @@ class Simulation:  # this class is the conversation itself
         old = []
 
         for o in range(0, len(self.organisms)):
-
             self.organisms[o] = update_caret(self.organisms[o])
             old.append(self.organisms[o])
 
@@ -208,20 +211,67 @@ class Simulation:  # this class is the conversation itself
         f = open(location, 'w')
         for i in range(0, len(self.organisms)):
             f.write(self.organisms[i] + '\n')
-        print("num: " + str(len(self.organisms)))
+
+
+class Analysis:
+    def __init__(self):
+        print("*ANALYSER OPEN*")
+        #self.location = str(input("FOLDER READ LOCATION: ")).replace('"', '')
+        self.location = 'Experiments/' + str(input('FOLDER IN "Experiments": '))
+        self.simulation = []  # will be a jagged/2d array
+        self.times = []
+        self.counts = []
+
+    def load(self, location):
+        print("*ANALYSER LOADING")
+        # load files into simulation, the ordering is arbitrary
+        for filename in os.listdir(location):
+            with open(location + filename, 'r') as file:  # open in read only mode
+                temp = file.readlines()  # this is a list
+                try:
+                    temp.remove(" ")
+                except ValueError:
+                    pass
+                for i in range(len(temp)):
+                    temp[i] = temp[i].strip('\n')
+                self.simulation.append(temp)  # append a list to the list of lists
+                file.close()
+        self.times = list(range(len(self.simulation)))  # time
+        print(self.times)
+
+    def plot_count(self):
+        # find self.counts
+        y = []  # counts
+        for t in range(len(self.simulation)):
+            y.append(len(self.simulation[t]))
+            print(len(self.simulation[t]))
+        self.counts = y
+
+        plt.plot(self.times, self.counts)
+        plt.show()
 
 
 def menu():
-    s = Simulation()
-    s.load()
-    for i in range(0, s.turns):
-        print("turn = " + str(i))
-        s.update()
-        # save every 1
-        if i % 1 == 0:
-            s.save_txt(str(i))
-        if len(s.organisms) > s.max_organisms:
-            break
+    print("***EvoEsse***")
+    print("**This program generates and analyses virtual organisms**")
+    if input("GENERATE NEW? (y/n): ") == 'y':
+        # full features mode
+        s = Simulation()
+        s.load(s.seed_location)
+        for i in range(0, s.turns):
+            s.update()
+            # save every 1
+            if i % 1 == 0:
+                s.save_txt(str(i))
+            if len(s.organisms) > s.max_organisms:
+                break
+    else:
+        #  if you want to load preexisting folder and use the organism frame.
+        a = Analysis()
+        a.load(a.location)
+        a.plot_count()
+        input("INPUT ANYTHING TO END: ")
+
 
 
 menu()
