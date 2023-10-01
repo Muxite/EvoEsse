@@ -207,8 +207,6 @@ class Simulation:  # this class is the conversation itself
         location = self.results_location + str(self.c) + '-' + tag + '.txt'
         f = open(location, 'w')
         for i in range(0, len(self.organisms)):
-            if i > self.max_organisms:
-                break
             f.write(self.organisms[i] + '\n')
         print("num: " + str(len(self.organisms)))
 
@@ -222,6 +220,8 @@ def menu():
         # save every 1
         if i % 1 == 0:
             s.save_txt(str(i))
+        if len(s.organisms) > s.max_organisms:
+            break
 
 
 menu()
