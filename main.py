@@ -4,6 +4,7 @@ import random
 import matplotlib.pyplot as plt
 import os
 
+
 pp = pprint.PrettyPrinter(indent=3)
 
 
@@ -225,29 +226,29 @@ class Analysis:
     def load(self, location):
         print("*ANALYSER LOADING")
         # load files into simulation, the ordering is arbitrary
-        for filename in os.listdir(location):
+        for filename in sorted(os.listdir(location)):
             with open(location + filename, 'r') as file:  # open in read only mode
-                temp = file.readlines()  # this is a list
-                try:
-                    temp.remove(" ")
-                except ValueError:
-                    pass
-                for i in range(len(temp)):
-                    temp[i] = temp[i].strip('\n')
+                temp = file.readlines().copy()  # this is a list
+                temp = [line.strip() for line in temp]
+                temp = [line for line in temp if temp]
                 self.simulation.append(temp)  # append a list to the list of lists
-                file.close()
+        data_size = 0
+        for sim in self.simulation:
+            data_size += sim.__sizeof__()
+        print(data_size)
         self.times = list(range(len(self.simulation)))  # time
-        print(self.times)
 
     def plot_count(self):
         # find self.counts
         y = []  # counts
         for t in range(len(self.simulation)):
             y.append(len(self.simulation[t]))
-            print(len(self.simulation[t]))
+            print(str(t) + ": " + str(len(self.simulation[t])))
         self.counts = y
-
         plt.plot(self.times, self.counts)
+        plt.yscale('log')
+        plt.ylim(ymin=0)
+        plt.xlim(xmin=0)
         plt.show()
 
 
